@@ -1,0 +1,36 @@
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="60"
+    height="30"
+    viewBox="0 0 60 30"
+    cursor="pointer"
+    onclick="toggle(evt)">
+
+    <defs>
+        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+            <feOffset dx="0" dy="1"/>
+            <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <style>
+            .track { fill:#ccc; transition:fill .3s }
+            .thumb { fill:#fff; transition:transform .3s }
+            .on .track { fill:#4CAF50 }
+            .on .thumb { transform:translateX(30px) }
+        </style>
+    </defs>
+
+    <rect class="track" width="60" height="30" rx="15"/>
+    <circle class="thumb" cx="15" cy="15" r="13" filter="url(#shadow)"/>
+
+    <script type="application/ecmascript"><![CDATA[
+        function toggle(e) {
+            const svg = e.target.ownerSVGElement;
+            svg.classList.toggle("on");
+        }
+    ]]></script>
+</svg>
