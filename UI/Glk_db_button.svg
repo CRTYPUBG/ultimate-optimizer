@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <!-- Kilit gövdesi -->
+  <rect x="30" y="45" width="60" height="50" rx="10" ry="10" fill="none" stroke="#4CAF50" stroke-width="5"/>
+  
+  <!-- Kilit kafesi -->
+  <path d="M40,45 a20,20 0 0,1 40,0" fill="none" stroke="#4CAF50" stroke-width="5"/>
+  
+  <!-- Stilize onay işareti (debloat/temiz) -->
+  <path d="M38,70 L52,85 L82,55" fill="none" stroke="#FFEB3B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

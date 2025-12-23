@@ -3,25 +3,25 @@
 */
 
 QWidget {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', 'Outfit', sans-serif;
     color: #ffffff;
 }
 
 /* Ana Şasi */
 #MainWidget {
-    background-color: #121212;
+    background-color: #0d0d0d;
     background-image: url("UI/uı.svg");
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: 45px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 40px;
+    border: 1px solid rgba(138, 43, 226, 0.4);
 }
 
 /* Sol Menü */
 #Sidebar {
-    background-color: rgba(26, 26, 26, 0.85);
-    border-top-left-radius: 45px;
-    border-bottom-left-radius: 45px;
+    background-color: rgba(10, 10, 10, 0.85);
+    border-top-left-radius: 40px;
+    border-bottom-left-radius: 40px;
     border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -29,7 +29,8 @@ QWidget {
     font-size: 24px;
     font-weight: 900;
     color: #8a2be2;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
 }
 
 /* Navigasyon Butonları */
@@ -37,99 +38,100 @@ QWidget {
     background-color: transparent;
     border: none;
     text-align: left;
-    padding: 18px 25px;
-    font-size: 15px;
-    border-radius: 15px;
-    color: #bbb;
+    padding: 20px 25px;
+    font-size: 14px;
+    border-radius: 18px;
+    color: #9d9d9d;
     margin-bottom: 5px;
 }
 
 #NavBtn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(138, 43, 226, 0.15);
     color: #fff;
 }
 
 #NavBtn:checked {
-    background-color: #8a2be2;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8a2be2, stop:1 #a020f0);
     color: #fff;
     font-weight: bold;
 }
 
 /* Update / Exit Butonları */
 #UpdateBtn {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
+    background-color: rgba(0, 199, 253, 0.1);
+    border: 1px solid rgba(0, 199, 253, 0.3);
+    border-radius: 12px;
     padding: 12px;
     font-weight: bold;
-    font-size: 12px;
-    margin-bottom: 10px;
+    font-size: 11px;
+    margin-bottom: 5px;
     color: #00c7fd;
 }
 
 #UpdateBtn:hover {
-    background-color: rgba(0, 199, 253, 0.1);
+    background-color: rgba(0, 199, 253, 0.2);
     border: 1px solid #00c7fd;
 }
 
 #ExitBtn {
-    background-color: #cf2727;
-    border-radius: 15px;
+    background-color: rgba(207, 39, 39, 0.1);
+    border: 1px solid rgba(207, 39, 39, 0.3);
+    border-radius: 12px;
     padding: 12px;
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 5px;
+    color: #ff4d4d;
 }
 
 #ExitBtn:hover { 
-    background-color: #ff4d4d;
+    background-color: #cf2727;
+    color: #fff;
 }
 
-/* Sayfa Başlığı */
+/* Sayfa İçeriği */
 #PageTitle {
     font-size: 32px;
     font-weight: 800;
     color: #fff;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 /* Ayar Satırları */
 #SettingRow {
     background-color: rgba(30, 30, 30, 0.6);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 10px;
 }
 
 #SettingRow:hover {
     background-color: rgba(40, 40, 40, 0.8);
-    border: 1px solid rgba(138, 43, 226, 0.2);
+    border: 1px solid rgba(138, 43, 226, 0.4);
 }
 
 #SettingTitle {
     font-size: 17px;
     font-weight: 700;
-    color: #eee;
+    color: #fff;
 }
 
 #SettingDesc {
-    font-size: 13px;
-    color: #888;
+    font-size: 12px;
+    color: #b0b0b0;
 }
 
-/* Scrollbar */
+/* Scrollbar (scrol.svg tabanlı) */
 QScrollBar:vertical {
     border: none;
-    background: transparent;
-    width: 6px;
-    margin: 0;
+    background: rgba(20, 20, 20, 0.3);
+    width: 12px;
+    margin: 4px;
+    border-radius: 6px;
 }
 QScrollBar::handle:vertical {
-    background: #333;
-    min-height: 20px;
-    border-radius: 3px;
-}
-QScrollBar::handle:vertical:hover {
-    background: #8a2be2;
+    border-image: url("UI/scrol.svg");
+    min-height: 50px;
+    border-radius: 6px;
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0px;
