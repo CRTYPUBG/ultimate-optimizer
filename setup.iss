@@ -3,8 +3,8 @@
 
 #define MyAppName "Ultimate Optimizer"
 #define MyAppVersion "1.1.0"
-#define MyAppPublisher "CDB1646"
-#define MyAppURL "https://github.com/CDB1646/multi-optimizer"
+#define MyAppPublisher "CRTYPUBG"
+#define MyAppURL "https://github.com/CRTYPUBG/ultimate-optimizer"
 #define MyAppExeName "UltimateOptimizer.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".myp"

@@ -1,5 +1,5 @@
 {
-  "name": "multi-optimizer",
+  "name": "ultimate-optimizer",
   "version": "v1.0.6",
   "latest_seen": "v1.0.6",
   "description": "✅ Yapılan Yenilikler (Özet)\r\n\r\n 🎨 Görsel Değişim\r\n- İkonlar: Emülatör ve navigasyon için yeni `on/off` ikonları eklendi.\r\n\r\n ⚙️ Teknik Gelişim\r\n- ESE Motoru: Tüm emülatör ayarları tek tuşla (Unified) birleştirildi.\r\n- Kayıt Sistemi: Ayarlar artık `Settings.json` ile kalıcı hale getirildi.\r\n- CMD Gizleme: Program artık arka planda tamamen sessiz (CMD'siz) açılıyor.\r\n- Hata Giderme: QThread ve karakter kodlama hataları giderildi.",

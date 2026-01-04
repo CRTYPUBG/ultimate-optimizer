@@ -78,7 +78,7 @@ def load_version_info():
     return DEFAULT_VERSION, DEFAULT_DESC
 
 CURRENT_VERSION, CURRENT_DESCRIPTION = load_version_info()
-GITHUB_API_URL = "https://api.github.com/repos/CDB1646/multi-optimizer/releases/latest"
+GITHUB_API_URL = "https://api.github.com/repos/CRTYPUBG/ultimate-optimizer/releases/latest"
 UI_DIR = os.path.join(os.path.dirname(__file__), "UI")
 
 def ensure_version_file():
@@ -86,7 +86,7 @@ def ensure_version_file():
     try:
         # Kodun içindeki sürümü her zaman esas al
         sync_data = {
-            "name": "multi-optimizer", 
+            "name": "ultimate-optimizer", 
             "version": CURRENT_VERSION,
             "description": CURRENT_DESCRIPTION,
             "last_active": datetime.now().strftime("%d.%m.%Y")
@@ -812,7 +812,7 @@ class MainWindow(QMainWindow):
 
                 # Version.json dosyasını güncelle
                 update_info = {
-                    "name": "multi-optimizer",
+                    "name": "ultimate-optimizer",
                     "version": latest_version,
                     "latest_seen": latest_version,
                     "description": ui_notes,
