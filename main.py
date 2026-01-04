@@ -56,8 +56,8 @@ logging.basicConfig(
 
 # --- CONSTANTS ---
 # --- VERSION CONFIG ---
-DEFAULT_VERSION = "v1.0.9"
-DEFAULT_DESC = "🚀 Sağlık & Onarım Modülü, Premium Splash Screen ve v1.0.9 sürüm özellikleri aktif edildi."
+DEFAULT_VERSION = "v1.1.0"
+DEFAULT_DESC = "🚀 Sağlık & Onarım Modülü, Self-Patching Güncelleme Sistemi, Premium UI ve Stabilite Düzeltmeleri içeren tam sürüm."
 
 def version_to_tuple(v):
     """Sürüm metnini ('v1.0.6') sayısal tuple'a çevirir (1, 0, 6)"""
