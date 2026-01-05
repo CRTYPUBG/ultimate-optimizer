@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/915bd74a-a1d0-43f9-9c46-fbce3c11f3ca
 
 Ultimate Optimizer is a premium Windows optimization tool that combines various tweaks from industry-standard tools into a modern, hardware-aware UI.
 
-## Features
+<img width="45" height="45" alt="banner" src="https://cdn-icons-png.freepik.com/512/17794/17794099.png" /> ## Features
 
 - **Hardware Aware:** Automatically detects CPU (Intel/AMD) and GPU (NVIDIA/AMD) to show relevant tweaks.
 - **Premium UI:** Modern, borderless window with glassmorphism, smooth animations, and SVG assets.
