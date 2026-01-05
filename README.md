@@ -11,7 +11,7 @@
   />
 </p>
 
-# Ultimate Optimizer
+<img width="41" height="41" alt="banner" src="https://github.com/user-attachments/assets/05564a87-fae1-45ee-802c-84f7dfc68fb6" /> # Ultimate Optimizer
 
 https://github.com/user-attachments/assets/915bd74a-a1d0-43f9-9c46-fbce3c11f3ca
 
