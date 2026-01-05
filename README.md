@@ -1,6 +1,6 @@
-<img width="526" height="526" alt="banner" src="https://github.com/user-attachments/assets/05564a87-fae1-45ee-802c-84f7dfc68fb6" />
+<video src="https://i.imgyukle.com/2026/01/06/Sk9q8h.mp4" controls poster="https://i.imgyukle.com/2026/01/06/Sk9q8h.fr.jpeg"></video>
 
-# Ultimate Optimizer
+<img width="120" height="120" alt="banner" src="https://github.com/user-attachments/assets/05564a87-fae1-45ee-802c-84f7dfc68fb6" /> # Ultimate Optimizer
 
 Ultimate Optimizer is a premium Windows optimization tool that combines various tweaks from industry-standard tools into a modern, hardware-aware UI.
 
