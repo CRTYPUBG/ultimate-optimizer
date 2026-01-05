@@ -1,7 +1,3 @@
-https://github.com/user-attachments/assets/915bd74a-a1d0-43f9-9c46-fbce3c11f3ca
-
-# Ultimate Optimizer
-
 <p align="center">
   <img
     src="https://github.com/user-attachments/assets/980b213a-cd67-4fb1-95fb-d7cc9e7a1b46"
@@ -14,7 +10,8 @@ https://github.com/user-attachments/assets/915bd74a-a1d0-43f9-9c46-fbce3c11f3ca
     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';"
   />
 </p>
-
+# Ultimate Optimizer
+https://github.com/user-attachments/assets/915bd74a-a1d0-43f9-9c46-fbce3c11f3ca
 **Ultimate Optimizer** is a premium Windows optimization tool that combines proven tweaks from industry-standard utilities into a modern, hardware-aware application with a clean and responsive UI.
 
 ---
