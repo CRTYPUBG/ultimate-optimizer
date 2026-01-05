@@ -21,19 +21,19 @@ Ultimate Optimizer is a premium Windows optimization tool that combines various 
 - **Update System:** Integrated update checker connected to GitHub Releases with changelog display.
 - **Logging:** All system changes are logged to `log-data.log` for transparency.
 
-## Technology Stack
+<img width="45" height="45" alt="banner" src="https://cdn-icons-png.flaticon.com/512/18510/18510301.png" /> ## Technology Stack
 
 - **Backend:** Python 3.x
 - **UI Framework:** PySide6 (Qt6)
 - **APIs:** WMI, WinReg, Windows API (ctypes)
 - **Assets:** SVG icons and PNG logos.
 
-## Installation
+<img width="45" height="45" alt="banner" src="https://cdn-icons-png.freepik.com/256/13754/13754717.png?semt=ais_white_label" /> ## Installation
 
 1. Run the `UltimateOptimizer.exe` from the Releases page.
 2. Run with Administrator privileges (the app will prompt you).
 
-## Development
+<img width="45" height="45" alt="banner" src="https://cdn-icons-png.flaticon.com/512/3263/3263182.png" /> ## Development
 
 To run from source:
 ```bash
