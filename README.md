@@ -1,4 +1,4 @@
-[▶ Watch Ultimate Optimizer Demo](https://i.imgyukle.com/2026/01/06/Sk9q8h.mp4)
+[![Ultimate Optimizer Preview](https://i.imgyukle.com/2026/01/06/Sk9q8h.fr.jpeg)](https://imgyukle.com/i/Sk9q8h)
 
 <img width="45" height="45" alt="banner" src="https://github.com/user-attachments/assets/05564a87-fae1-45ee-802c-84f7dfc68fb6" /> # Ultimate Optimizer
 
