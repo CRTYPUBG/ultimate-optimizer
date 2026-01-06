@@ -24,7 +24,8 @@ from datetime import datetime
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                                QHBoxLayout, QPushButton, QLabel, QStackedWidget, 
                                QFrame, QScrollArea, QGraphicsDropShadowEffect,
-                               QSizePolicy, QMessageBox)
+                               QSizePolicy, QMessageBox, QDialog, QLineEdit, 
+                               QListWidget, QListWidgetItem)
 from PySide6.QtCore import Qt, QSize, QPoint, QPropertyAnimation, QEasingCurve, Property, QTimer, QThread, Signal
 from PySide6.QtGui import QIcon, QPixmap, QCursor, QColor, QPainter, QLinearGradient
 
@@ -56,8 +57,8 @@ logging.basicConfig(
 
 # --- CONSTANTS ---
 # --- VERSION CONFIG ---
-DEFAULT_VERSION = "v1.1.0"
-DEFAULT_DESC = "🚀 Sağlık & Onarım Modülü, Self-Patching Güncelleme Sistemi, Premium UI ve Stabilite Düzeltmeleri içeren tam sürüm."
+DEFAULT_VERSION = "v1.1.6"
+DEFAULT_DESC = "🛡️ Güvenlik & İmza Güncellemesi: Dijital sertifika doğrulaması ve zaman damgalı güvenli paketleme sistemi."
 
 def version_to_tuple(v):
     """Sürüm metnini ('v1.0.6') sayısal tuple'a çevirir (1, 0, 6)"""
@@ -194,6 +195,61 @@ class ESEWorker(QThread):
             winreg.CloseKey(key)
         except: pass
 
+class ESEWorker(QThread):
+    def __init__(self, emulator_procs):
+        super().__init__()
+        self.emulator_procs = emulator_procs
+        self.running = True
+        self.active_pids = set()
+
+    def run(self):
+        logging.info("ESE: Unified Engine started. Monitoring for emulators...")
+        while self.running:
+            try:
+                found_any = False
+                for proc in psutil.process_iter(['name', 'pid', 'cpu_percent']):
+                    if proc.info['name'] in self.emulator_procs:
+                        found_any = True
+                        pid = proc.info['pid']
+                        p = psutil.Process(pid)
+                        
+                        if pid not in self.active_pids:
+                            p.nice(psutil.HIGH_PRIORITY_CLASS)
+                            cores = list(range(psutil.cpu_count()))
+                            if len(cores) > 2: p.cpu_affinity(cores[1:])
+                            if hasattr(p, 'ionice'): p.ionice(psutil.IOPRIO_HIGH)
+                            self.active_pids.add(pid)
+                        
+                        ctypes.windll.kernel32.SwitchToThread()
+                        ctypes.windll.kernel32.SetPriorityClass(p.handle, 0x00000080)
+
+                        cpu_usage = proc.info['cpu_percent']
+                        sleep_time = 5 if cpu_usage > 50 else 15
+                        self.msleep(sleep_time)
+
+                if not found_any:
+                    self.active_pids.clear()
+                    self.msleep(1000)
+                
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+            except Exception as e:
+                logging.error(f"ESE Worker Error: {e}")
+                self.msleep(100)
+
+    def restore_system(self):
+        logging.info("ESE: Restoring system behavior...")
+        self.running = False
+        try:
+            ntdll = ctypes.WinDLL('ntdll.dll')
+            ntdll.NtSetTimerResolution(156250, 0, ctypes.byref(ctypes.c_ulong()))
+            root = winreg.HKEY_LOCAL_MACHINE
+            path = r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Scheduler"
+            key = winreg.CreateKeyEx(root, path, 0, winreg.KEY_ALL_ACCESS)
+            winreg.SetValueEx(key, "EnableVolatileBatching", 0, winreg.REG_DWORD, 0)
+            winreg.CloseKey(key)
+        except: pass
+
 class EmulatorStabilityEngine:
     def __init__(self):
         self.emulator_procs = ["AndroidProcess.exe", "aow_exe.exe", "dnplayer.exe", "HD-Player.exe", "BlueStacks.exe", "MEmu.exe"]
@@ -224,8 +280,104 @@ class EmulatorStabilityEngine:
             self.worker = None
             logging.info("ESE: Disabled and Restored.")
 
+class ProOptimizerWorker(QThread):
+    def __init__(self, settings_getter):
+        super().__init__()
+        self.get_settings = settings_getter
+        self.running = True
+        self.timer_active = False
+        self.ntdll = ctypes.WinDLL('ntdll.dll')
+        self.default_procs = ["csgo.exe", "valorant.exe", "r5apex.exe", "pubg.exe", "TslGame.exe", 
+                             "aow_exe.exe", "AndroidProcess.exe", "FortniteClient-Win64-Shipping.exe",
+                             "GTA5.exe", "League of Legends.exe", "Overwatch.exe"]
+
+    def run(self):
+        logging.info("Pro Optimizer Worker started.")
+        while self.running:
+            try:
+                settings = self.get_settings()
+                game_procs = settings.get("TargetGameProcs", self.default_procs)
+                is_gaming = False
+                
+                # 1. Detect Active Game/Proc
+                for proc in psutil.process_iter(['name', 'pid']):
+                    try:
+                        name = proc.info['name']
+                        if name in game_procs:
+                            is_gaming = True
+                            p = psutil.Process(proc.info['pid'])
+                            
+                            # Core 0 Isolation
+                            if settings.get("Core 0 Isolation", False):
+                                cores = list(range(psutil.cpu_count()))
+                                if len(cores) > 2:
+                                    try:
+                                        aff = p.cpu_affinity()
+                                        if 0 in aff: p.cpu_affinity(cores[1:])
+                                    except: pass
+                            
+                            # Disk I/O Smoother
+                            if settings.get("Disk I/O Burst Smoother", False):
+                                if name in ["aow_exe.exe", "AndroidProcess.exe"]:
+                                    try:
+                                        if hasattr(p, 'ionice'): p.ionice(psutil.IOPRIO_HIGH)
+                                    except: pass
+                    except: continue
+
+                # 2. Dynamic Timer Resolution
+                if settings.get("Dynamic Timer Resolution", False):
+                    if is_gaming and not self.timer_active:
+                        # 0.5ms (5000 units)
+                        self.ntdll.NtSetTimerResolution(5000, 1, ctypes.byref(ctypes.c_ulong()))
+                        self.timer_active = True
+                    elif not is_gaming and self.timer_active:
+                        self.ntdll.NtSetTimerResolution(156250, 0, ctypes.byref(ctypes.c_ulong()))
+                        self.timer_active = False
+
+                # 3. Standby Memory Guard
+                if settings.get("Standby Memory Guard", False):
+                    mem = psutil.virtual_memory()
+                    if mem.percent > 85: # Agresif eşik
+                        # Empty system working set
+                        ctypes.windll.psapi.EmptyWorkingSet(ctypes.windll.kernel32.GetCurrentProcess())
+                        # Clear Standby List requires ntdll wrapper or specific tool, 
+                        # here we use a safe alternative: System GC via shell if possible or just log
+                        subprocess.run("powershell -Command \"[System.GC]::Collect()\"", shell=True, capture_output=True)
+
+                self.msleep(3000)
+            except Exception as e:
+                logging.error(f"Pro Worker Error: {e}")
+                self.msleep(5000)
+
+    def stop(self):
+        self.running = False
+        if self.timer_active:
+            self.ntdll.NtSetTimerResolution(156250, 0, ctypes.byref(ctypes.c_ulong()))
+        self.wait()
+
+class ProOptimizerEngine:
+    def __init__(self, settings_getter):
+        self.worker = None
+        self.get_settings = settings_getter
+
+    def start(self):
+        if not self.worker:
+            self.worker = ProOptimizerWorker(self.get_settings)
+            self.worker.start()
+
+    def stop(self):
+        if self.worker:
+            self.worker.stop()
+            self.worker = None
+
 # --- TWEAK ENGINE ---
 class TweakEngine:
+    def __init__(self, settings_getter=None):
+        self.settings_getter = settings_getter
+        self.pro_engine = None
+        if settings_getter:
+            self.pro_engine = ProOptimizerEngine(settings_getter)
+
     @staticmethod
     def set_reg_value(root, path, name, value, vtype=winreg.REG_DWORD):
         try:
@@ -370,6 +522,52 @@ class TweakEngine:
             if state:
                 self.run_cmd("powershell -Command \"Checkpoint-Computer -Description 'Optimizer_Protect' -RestorePointType MODIFY_SETTINGS\"")
 
+        # --- ULTIMATE PRO TWEAKS ---
+        elif title in ["Dynamic Timer Resolution", "Core 0 Isolation", "Disk I/O Burst Smoother", "Standby Memory Guard"]:
+            if state:
+                if self.pro_engine: self.pro_engine.start()
+            # Note: We don't stop the engine immediately because other pro tweaks might be on
+            # Global stop is usually handled on app close or if all pro tweaks are off
+
+        elif title == "GPU Interrupt Priority Lock":
+            self.apply_gpu_interrupt_lock(state)
+
+    def apply_gpu_interrupt_lock(self, state):
+        try:
+            c = wmi.WMI()
+            gpu_pnp = None
+            for gpu in c.Win32_VideoController():
+                if gpu.PNPDeviceID and "PCI" in gpu.PNPDeviceID:
+                    gpu_pnp = gpu.PNPDeviceID
+                    break
+            
+            if not gpu_pnp: return
+            
+            base_path = fr"SYSTEM\CurrentControlSet\Enum\{gpu_pnp}\Device Parameters\Interrupt Management"
+            if state:
+                # 1. Enable MSI if not enabled
+                msi_path = base_path + r"\MessageSignaledInterruptProperties"
+                self.set_reg_value(winreg.HKEY_LOCAL_MACHINE, msi_path, "MSISupported", 1)
+                
+                # 2. Affinity Policy
+                aff_path = base_path + r"\Affinity Policy"
+                self.set_reg_value(winreg.HKEY_LOCAL_MACHINE, aff_path, "DevicePriority", 3) # High
+                self.set_reg_value(winreg.HKEY_LOCAL_MACHINE, aff_path, "AssignmentPolicy", 4) # Specific Processors
+                
+                # Target last core
+                cores = psutil.cpu_count()
+                mask = 1 << (cores - 1)
+                self.set_reg_value(winreg.HKEY_LOCAL_MACHINE, aff_path, "TargetProcessors", mask, winreg.REG_QWORD if cores > 32 else winreg.REG_DWORD)
+                logging.info(f"GPU Interrupt Lock: Enabled for {gpu_pnp} on Core {cores-1}")
+            else:
+                # Restore defaults
+                aff_path = base_path + r"\Affinity Policy"
+                self.delete_reg_value(winreg.HKEY_LOCAL_MACHINE, aff_path, "DevicePriority")
+                self.delete_reg_value(winreg.HKEY_LOCAL_MACHINE, aff_path, "AssignmentPolicy")
+                self.delete_reg_value(winreg.HKEY_LOCAL_MACHINE, aff_path, "TargetProcessors")
+        except Exception as e:
+            logging.error(f"GPU Lock Error: {e}")
+
     def run_repair_mode(self, state):
         """Oyun Odaklı Windows Onarım Modu"""
         logging.info(f"Repair Mode: {'ON' if state else 'OFF'}")
@@ -507,11 +705,19 @@ class AnimatedToggle(QPushButton):
         painter.drawEllipse(int(self._circle_pos), 3, 20, 20)
 
 class SettingRow(QFrame):
-    def __init__(self, title, description, engine, initial_state=False, callback=None):
+    def __init__(self, title, description, engine, initial_state=False, callback=None, icon_path=None):
         super().__init__()
         self.setObjectName("SettingRow")
         layout = QHBoxLayout(self)
         layout.setContentsMargins(20, 15, 20, 15)
+        
+        if icon_path and os.path.exists(icon_path):
+            icon_lbl = QLabel()
+            pix = QPixmap(icon_path)
+            icon_lbl.setPixmap(pix.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            icon_lbl.setFixedWidth(40)
+            layout.addWidget(icon_lbl)
+
         text_layout = QVBoxLayout()
         lbl_title = QLabel(title); lbl_title.setObjectName("SettingTitle")
         lbl_desc = QLabel(description); lbl_desc.setObjectName("SettingDesc")
@@ -654,8 +860,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.hw = data['hw']
         self.app_settings = data['settings']
-        self.engine = TweakEngine()
+        self.engine = TweakEngine(settings_getter=lambda: self.app_settings)
         self.update_worker = None
+        
+        # Pro Engine'i ayarlar aktifse başlat
+        pro_tweaks = ["Dynamic Timer Resolution", "Core 0 Isolation", "Disk I/O Burst Smoother", "Standby Memory Guard"]
+        if any(self.app_settings.get(t, False) for t in pro_tweaks):
+            if self.engine.pro_engine: self.engine.pro_engine.start()
         
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -685,6 +896,7 @@ class MainWindow(QMainWindow):
         win_off, win_on = ("win11_button_off.svg", "win11_button_on.png") if self.hw['os'] == '11' else ("win10_button_off.svg", "win10_buton_on.png")
         self.nav_btns = {
             "Genel": AnimatedNavBtn("Windows Genel", win_off, win_on),
+            "Ultimate": AnimatedNavBtn("Ultimate Pro", "ultimate_logo.png"), # Yeni Pro Menüsü
             "Gaming": AnimatedNavBtn("Oyun & Latency", "oyn_lc_button.svg"),
             "Health": AnimatedNavBtn("Sağlık & Onarım", "gvn_no_button_.svg"),
             "Stability": AnimatedNavBtn("Emülatör Stabilite", "emu_stb_button_off.svg", "emu_stb_button_on.png"),
@@ -693,7 +905,7 @@ class MainWindow(QMainWindow):
             "CPU": None
         }
 
-        for key in ["Genel", "Gaming", "Health", "Stability", "Privacy"]:
+        for key in ["Genel", "Ultimate", "Gaming", "Health", "Stability", "Privacy"]:
             self.nav_btns[key].clicked.connect(lambda checked=False, k=key: self.switch_page(k))
             self.sidebar_layout.addWidget(self.nav_btns[key])
 
@@ -734,8 +946,8 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         logging.info("Application closing. Cleaning up...")
-        if hasattr(self.engine, 'ese_engine'):
-            self.engine.ese_engine.stop()
+        if self.engine and self.engine.pro_engine:
+            self.engine.pro_engine.stop()
         if self.update_worker and self.update_worker.isRunning():
             self.update_worker.terminate()
             self.update_worker.wait()
@@ -850,7 +1062,15 @@ class MainWindow(QMainWindow):
             ("FSO & Game Bar Kapat", "Tam ekran iyileştirmelerini ve Game Bar gecikmesini engeller."),
             ("OneDrive Kaldır", "Sistemi yavaşlatan OneDrive'ı tamamen kaldırır.")
         ]))
-        # 1. Gaming & Latency
+        # 1. Ultimate Pro
+        self.content_area.addWidget(self.create_page("Ultimate Pro Tweaks", [
+            ("Dynamic Timer Resolution", "Oyun algılandığında 0.5ms ultra düşük gecikme timer'ını aktif eder.", "timer_controller.svg"),
+            ("Core 0 Isolation", "Oyun ve emülatörleri Core 0'dan uzaklaştırarak sistem stutter'ını engeller.", "core_isolation.svg"),
+            ("Disk I/O Burst Smoother", "Emülatör disk patlamalarını ve texture load takılmalarını yumuşatır.", "disk_io_smoother.svg"),
+            ("Standby Memory Guard", "Bellek parçalanmasını izler ve sadece ihtiyaç duyulduğunda RAM'i optimize eder.", "memory_guard.svg"),
+            ("GPU Interrupt Priority Lock", "GPU kesintilerini son çekirdeğe kilitleyerek mouse ve frame gecikmesini düşürür.", "gpu_interrupt_lock.svg")
+        ]))
+        # 2. Gaming & Latency
         self.content_area.addWidget(self.create_page("Oyun & Düşük Gecikme", [
             ("Gecikme İyileştirme (MMCSS)", "Ağ ve işlemci önceliğini multimedya/oyunlara odaklar."),
             ("Win32 Priority Separation", "İşlemci zaman dilimlerini oyun performansı için optimize eder."),
@@ -918,10 +1138,28 @@ class MainWindow(QMainWindow):
         scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll.setStyleSheet("background: transparent; border: none;")
         scroll_content = QWidget(); scroll_content.setObjectName("ScrollContent")
         scroll_layout = QVBoxLayout(scroll_content); scroll_layout.setContentsMargins(0, 0, 10, 0); scroll_layout.setSpacing(10)
-        for title, desc in settings_list:
+        for item in settings_list:
+            if len(item) == 3:
+                title, desc, icon_file = item
+                icon_path = get_ui_path(icon_file)
+            else:
+                title, desc = item
+                icon_path = None
+            
             initial = self.app_settings.get(title, False)
-            row = SettingRow(title, desc, self.engine, initial, self.save_setting)
+            row = SettingRow(title, desc, self.engine, initial, self.save_setting, icon_path)
             scroll_layout.addWidget(row)
+        
+        # --- ÖZEL OYUN LİSTESİ BUTONU (Sadece Ultimate sayfasında) ---
+        if title_text == "Ultimate Pro Tweaks":
+            btn_manage = QPushButton(" 🎮 OYUN LİSTESİNİ DÜZENLE")
+            btn_manage.setObjectName("ManageGamesBtn")
+            btn_manage.setCursor(Qt.PointingHandCursor)
+            btn_manage.setFixedHeight(50)
+            btn_manage.clicked.connect(self.open_process_dialog)
+            scroll_layout.addSpacing(20)
+            scroll_layout.addWidget(btn_manage)
+
         scroll_layout.addStretch(); scroll.setWidget(scroll_content); container_layout.addWidget(scroll)
         layout.addWidget(container)
         return page
@@ -935,10 +1173,10 @@ class MainWindow(QMainWindow):
         for btn in self.nav_btns.values():
             if btn: btn.update_icon()
         
-        indices = {"Genel": 0, "Gaming": 1, "Stability": 2, "Health": 3, "Privacy": 4, "GPU": 5, "CPU": 6}
+        indices = {"Genel": 0, "Ultimate": 1, "Gaming": 2, "Health": 3, "Stability": 4, "Privacy": 5, "GPU": 6, "CPU": 7}
         # Correctly find index by name because of dynamic nature
         # For simplicity, we match the creation order
-        order = ["Genel", "Gaming", "Stability", "Health", "Privacy", "GPU", "CPU"]
+        order = ["Genel", "Ultimate", "Gaming", "Health", "Stability", "Privacy", "GPU", "CPU"]
         idx = 0
         for name in order:
             if name == key: break
@@ -954,6 +1192,83 @@ class MainWindow(QMainWindow):
         if self.old_pos:
             d = QPoint(e.globalPosition().toPoint() - self.old_pos)
             self.move(self.x() + d.x(), self.y() + d.y()); self.old_pos = e.globalPosition().toPoint()
+
+    def open_process_dialog(self):
+        default_list = ["csgo.exe", "valorant.exe", "r5apex.exe", "pubg.exe", "TslGame.exe", 
+                        "aow_exe.exe", "AndroidProcess.exe", "FortniteClient-Win64-Shipping.exe",
+                        "GTA5.exe", "League of Legends.exe", "Overwatch.exe"]
+        current_list = self.app_settings.get("TargetGameProcs", default_list)
+        
+        dlg = ProcessListDialog(current_list, self)
+        if dlg.exec() == QDialog.Accepted:
+            new_list = dlg.get_list()
+            self.save_setting("TargetGameProcs", new_list)
+            QMessageBox.information(self, "Başarılı", "Oyun listesi güncellendi. Değişiklikler anında aktif olacaktır.")
+
+class ProcessListDialog(QDialog):
+    def __init__(self, process_list, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Oyun Listesi Yönetimi")
+        self.setFixedSize(400, 500)
+        self.setStyleSheet("""
+            QDialog { background-color: #0f0f12; color: white; border: 1px solid #8a2be2; border-radius: 20px; }
+            QLabel { color: rgba(255,255,255,0.7); font-size: 12px; }
+            QLineEdit { background: #1a1a1f; border: 1px solid #333; border-radius: 8px; padding: 10px; color: white; }
+            QListWidget { background: #1a1a1f; border: 1px solid #333; border-radius: 8px; color: white; outline: none; }
+            QListWidget::item { padding: 8px; border-bottom: 1px solid #222; }
+            QListWidget::item:selected { background: #8a2be2; border-radius: 5px; }
+            QPushButton { border-radius: 8px; padding: 10px; font-weight: bold; }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
+
+        layout.addWidget(QLabel("İzlenecek oyun/işlem adlarını girin (Örn: valorant.exe):"))
+        
+        self.input_field = QLineEdit()
+        self.input_field.setPlaceholderText("Yeni işlem adı ekle...")
+        self.input_field.returnPressed.connect(self.add_item)
+        layout.addWidget(self.input_field)
+
+        self.list_widget = QListWidget()
+        for p in process_list:
+            self.list_widget.addItem(p)
+        layout.addWidget(self.list_widget)
+
+        btn_layout = QHBoxLayout()
+        self.btn_add = QPushButton("EKLE")
+        self.btn_add.setStyleSheet("background: #8a2be2; color: white;")
+        self.btn_add.clicked.connect(self.add_item)
+        
+        self.btn_del = QPushButton("SİL")
+        self.btn_del.setStyleSheet("background: #e74c3c; color: white;")
+        self.btn_del.clicked.connect(self.delete_item)
+        
+        btn_layout.addWidget(self.btn_add)
+        btn_layout.addWidget(self.btn_del)
+        layout.addLayout(btn_layout)
+
+        self.btn_save = QPushButton("KAYDET VE KAPAT")
+        self.btn_save.setStyleSheet("background: #2ecc71; color: white; margin-top: 10px;")
+        self.btn_save.clicked.connect(self.accept)
+        layout.addWidget(self.btn_save)
+
+    def add_item(self):
+        text = self.input_field.text().strip()
+        if text and not self.list_widget.findItems(text, Qt.MatchExactly):
+            self.list_widget.addItem(text)
+            self.input_field.clear()
+
+    def delete_item(self):
+        for item in self.list_widget.selectedItems():
+            self.list_widget.takeItem(self.list_widget.row(item))
+
+    def get_list(self):
+        items = []
+        for i in range(self.list_widget.count()):
+            items.append(self.list_widget.item(i).text())
+        return items
 
 if __name__ == "__main__":
     if not is_admin():

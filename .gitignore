@@ -22,10 +22,14 @@ wheels/
 *.egg
 
 # Optimizer Specific
-temp_repos/
+installer/
 log-data.log
-*.exe
+Settings.json
+*.msix
+*.pfx
+*.cer
 
 # IDE
 .vscode/
 .idea/
+.agent/
