@@ -46,6 +46,7 @@ DATA_DIR = get_data_dir()
 LOG_FILE = os.path.join(DATA_DIR, 'log-data.log')
 SETTINGS_FILE = os.path.join(DATA_DIR, 'Settings.json')
 VERSION_FILE = os.path.join(DATA_DIR, 'Version.json')
+DNA_FILE = os.path.join(DATA_DIR, 'DNA_Profiles.json')
 
 # --- LOGGING SETUP ---
 logging.basicConfig(
@@ -57,8 +58,8 @@ logging.basicConfig(
 
 # --- CONSTANTS ---
 # --- VERSION CONFIG ---
-DEFAULT_VERSION = "v1.1.6"
-DEFAULT_DESC = "🛡️ Güvenlik & İmza Güncellemesi: Dijital sertifika doğrulaması ve zaman damgalı güvenli paketleme sistemi."
+DEFAULT_VERSION = "v1.1.7"
+DEFAULT_DESC = "🧬 FPS DNA MODE™ & İşlemci Mimarisi Optimizasyonu: Intel/AMD özel çekirdek yönetimi ve gerçek zamanlı davranış analizi sistemi aktif edildi."
 
 def version_to_tuple(v):
     """Sürüm metnini ('v1.0.6') sayısal tuple'a çevirir (1, 0, 6)"""
@@ -370,13 +371,232 @@ class ProOptimizerEngine:
             self.worker.stop()
             self.worker = None
 
+# --- ADVANCED CPU OPTIMIZATION ENGINE (ACPM, ICL, DNA) ---
+class AdvancedCPUWorker(QThread):
+    def __init__(self, settings_getter):
+        super().__init__()
+        self.get_settings = settings_getter
+        self.running = True
+        self.target_procs = ["csgo.exe", "valorant.exe", "r5apex.exe", "pubg.exe", "TslGame.exe", 
+                            "aow_exe.exe", "AndroidProcess.exe", "FortniteClient-Win64-Shipping.exe",
+                            "GTA5.exe", "League of Legends.exe", "Overwatch.exe"]
+        self.topology = self._get_cpu_topology()
+        self.dna_profiles = self._load_dna_profiles()
+        self.active_analysis = {} # pid: { 'start_time': datetime, 'samples': [], 'migrations': 0, 'last_core': -1 }
+        self.applied_pids = set()
+
+    def _get_cpu_topology(self):
+        """Çekirdek yapısını (P-Core/E-Core) analiz eder."""
+        topo = {"P": [], "E": [], "Type": "Unknown"}
+        try:
+            count = psutil.cpu_count()
+            p_count = int(count * 0.75) if count > 8 else count
+            topo["P"] = list(range(p_count))
+            topo["E"] = list(range(p_count, count)) if count > p_count else []
+            if "INTEL" in platform.processor().upper(): topo["Type"] = "Intel"
+            elif "AMD" in platform.processor().upper(): topo["Type"] = "AMD"
+        except: 
+            topo["P"] = list(range(psutil.cpu_count()))
+        return topo
+
+    def _load_dna_profiles(self):
+        if os.path.exists(DNA_FILE):
+            try:
+                with open(DNA_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except: pass
+        return {}
+
+    def _save_dna_profiles(self):
+        try:
+            with open(DNA_FILE, "w", encoding="utf-8") as f:
+                json.dump(self.dna_profiles, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            logging.error(f"DNA Save Error: {e}")
+
+    def run(self):
+        logging.info("Advanced CPU Engine: Gizli özellikler aktif edildi.")
+        ticker = 0
+        while self.running:
+            try:
+                settings = self.get_settings()
+                found_game = False
+                current_time = datetime.now()
+                active_pids_in_this_loop = set()
+                
+                for proc in psutil.process_iter(['name', 'pid', 'cpu_percent']):
+                    try:
+                        name = proc.info['name']
+                        if name in settings.get("TargetGameProcs", self.target_procs):
+                            found_game = True
+                            pid = proc.info['pid']
+                            p = psutil.Process(pid)
+                            active_pids_in_this_loop.add(pid)
+                            
+                            # 1. ACPM (Adaptive Core Priority Masking)
+                            if settings.get("Adaptive Core Priority Masking (ACPM)", False):
+                                if self.topology["E"]:
+                                    p.cpu_affinity(self.topology["P"])
+                                    p.nice(psutil.HIGH_PRIORITY_CLASS)
+                            
+                            # 2. ICL-FPS (Instruction Cache Locking)
+                            if settings.get("Instruction Cache Locking (ICL-FPS)", False):
+                                ctypes.windll.kernel32.SetPriorityClass(p.handle, 0x00000080) # HIGH
+                            
+                            # 3. FPS DNA MODE™ Algorithm
+                            if settings.get("FPS DNA MODE™", False):
+                                if name in self.dna_profiles:
+                                    # Profil Uygula (Sadece bir kez)
+                                    if pid not in self.applied_pids:
+                                        self._apply_dna_profile(p, self.dna_profiles[name])
+                                        self.applied_pids.add(pid)
+                                else:
+                                    # Analiz Yap
+                                    self._analyze_dna(p, name, current_time)
+
+                    except (psutil.NoSuchProcess, psutil.AccessDenied): continue
+
+                # Temizlik: Kapanan oyunların PID'lerini temizle
+                self.applied_pids &= active_pids_in_this_loop
+                items_to_del = [pid for pid in self.active_analysis if pid not in active_pids_in_this_loop]
+                for pid in items_to_del: del self.active_analysis[pid]
+
+                # 4. Micro-Stutter Killer Loop
+                if found_game and settings.get("Micro-Stutter Killer Loop", False):
+                    for _ in range(20): # Daha agresif loop
+                        ctypes.windll.kernel32.SwitchToThread()
+                
+                # 5. Clock Stabilization
+                if settings.get("Clock Stabilization", False):
+                    if found_game and ticker % 10 == 0:
+                        subprocess.run("powercfg -setacvalueindex scheme_current sub_processor processorsettingsmin 100", shell=True, capture_output=True)
+                        subprocess.run("powercfg -setactive scheme_current", shell=True, capture_output=True)
+
+                ticker += 1
+                self.msleep(1000 if not found_game else 500)
+                
+            except Exception as e:
+                logging.error(f"Advanced CPU Worker Error: {e}")
+                self.msleep(5000)
+
+    def _analyze_dna(self, p, name, current_time):
+        pid = p.pid
+        if pid not in self.active_analysis:
+            self.active_analysis[pid] = {
+                'start_time': current_time,
+                'samples': [],
+                'migrations': 0,
+                'last_core': -1,
+                'threads': []
+            }
+            logging.info(f"DNA Phase 1: Gathering behavior for {name}...")
+
+        data = self.active_analysis[pid]
+        # Data Collect
+        try:
+            current_core = p.cpu_num()
+            if data['last_core'] != -1 and current_core != data['last_core']:
+                data['migrations'] += 1
+            data['last_core'] = current_core
+            data['samples'].append(p.cpu_percent())
+            data['threads'].append(p.num_threads())
+        except: return
+
+        duration = (current_time - data['start_time']).total_seconds()
+        if duration > 180: # 3 Dakika Analiz
+            logging.info(f"DNA Phase 2: Extracting DNA for {name}...")
+            profile = self._extract_dna(data, name)
+            self.dna_profiles[name] = profile
+            self._save_dna_profiles()
+            logging.info(f"DNA Phase 3: Profile '{profile['type']}' saved for {name}.")
+            del self.active_analysis[pid]
+
+    def _extract_dna(self, data, name):
+        avg_threads = sum(data['threads']) / len(data['threads'])
+        migration_rate = data['migrations'] / len(data['samples'])
+        max_spike = max(data['samples'])
+        
+        # Classification Logic
+        # A) STABLE-CORE: Az migration, az thread
+        if migration_rate < 0.2 and avg_threads < 16:
+            dna_type = "STABLE_CORE"
+            profile = {
+                "type": dna_type,
+                "priority": "HIGH",
+                "core_lock": True,
+                "timer_resolution": 0.5,
+                "preferred_cores": self.topology["P"][:4] if len(self.topology["P"]) > 4 else self.topology["P"]
+            }
+        # B) BURST: Yüksek spike, yüksek migration
+        elif max_spike > 80 and migration_rate > 0.4:
+            dna_type = "BURST"
+            profile = {
+                "type": dna_type,
+                "priority": "ABOVE_NORMAL",
+                "core_lock": False,
+                "timer_resolution": 1.0,
+                "boost_bias": "AGGRESSIVE"
+            }
+        # C) LATENCY-SENSITIVE: Emülatör veya yüksek thread
+        else:
+            dna_type = "LATENCY_SENSITIVE"
+            profile = {
+                "type": dna_type,
+                "priority": "HIGH",
+                "core_lock": True,
+                "timer_resolution": 0.5,
+                "input_core": self.topology["P"][1] if len(self.topology["P"]) > 1 else 0
+            }
+        
+        return profile
+
+    def _apply_dna_profile(self, p, profile):
+        try:
+            # 1. Priority
+            pri = psutil.HIGH_PRIORITY_CLASS if profile["priority"] == "HIGH" else psutil.ABOVE_NORMAL_PRIORITY_CLASS
+            p.nice(pri)
+            
+            # 2. Affinity
+            if profile.get("core_lock", False) and "preferred_cores" in profile:
+                p.cpu_affinity(profile["preferred_cores"])
+            
+            # 3. Timer
+            if "timer_resolution" in profile:
+                res = int(profile["timer_resolution"] * 10000)
+                ctypes.WinDLL('ntdll.dll').NtSetTimerResolution(res, 1, ctypes.byref(ctypes.c_ulong()))
+            
+            logging.info(f"DNA Phase 4: Applied '{profile['type']}' profile to {p.name()}({p.pid})")
+        except Exception as e:
+            logging.error(f"DNA Apply Error: {e}")
+
+    def stop(self):
+        self.running = False
+        self.wait()
+
+class AdvancedCPUEngine:
+    def __init__(self, settings_getter):
+        self.worker = None
+        self.get_settings = settings_getter
+
+    def start(self):
+        if not self.worker:
+            self.worker = AdvancedCPUWorker(self.get_settings)
+            self.worker.start()
+
+    def stop(self):
+        if self.worker:
+            self.worker.stop()
+            self.worker = None
+
 # --- TWEAK ENGINE ---
 class TweakEngine:
     def __init__(self, settings_getter=None):
         self.settings_getter = settings_getter
         self.pro_engine = None
+        self.adv_cpu_engine = None
         if settings_getter:
             self.pro_engine = ProOptimizerEngine(settings_getter)
+            self.adv_cpu_engine = AdvancedCPUEngine(settings_getter)
 
     @staticmethod
     def set_reg_value(root, path, name, value, vtype=winreg.REG_DWORD):
@@ -531,6 +751,11 @@ class TweakEngine:
 
         elif title == "GPU Interrupt Priority Lock":
             self.apply_gpu_interrupt_lock(state)
+
+        # --- ADVANCED CPU TWEAKS ---
+        elif title in ["Adaptive Core Priority Masking (ACPM)", "Instruction Cache Locking (ICL-FPS)", "FPS DNA MODE™", "Micro-Stutter Killer Loop", "Clock Stabilization"]:
+            if state:
+                if self.adv_cpu_engine: self.adv_cpu_engine.start()
 
     def apply_gpu_interrupt_lock(self, state):
         try:
@@ -868,6 +1093,11 @@ class MainWindow(QMainWindow):
         if any(self.app_settings.get(t, False) for t in pro_tweaks):
             if self.engine.pro_engine: self.engine.pro_engine.start()
         
+        # Advanced CPU Engine'i başlat
+        adv_cpu_tweaks = ["Adaptive Core Priority Masking (ACPM)", "Instruction Cache Locking (ICL-FPS)", "FPS DNA MODE™", "Micro-Stutter Killer Loop", "Clock Stabilization"]
+        if any(self.app_settings.get(t, False) for t in adv_cpu_tweaks):
+            if self.engine.adv_cpu_engine: self.engine.adv_cpu_engine.start()
+        
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(1100, 700)
@@ -896,7 +1126,7 @@ class MainWindow(QMainWindow):
         win_off, win_on = ("win11_button_off.svg", "win11_button_on.png") if self.hw['os'] == '11' else ("win10_button_off.svg", "win10_buton_on.png")
         self.nav_btns = {
             "Genel": AnimatedNavBtn("Windows Genel", win_off, win_on),
-            "Ultimate": AnimatedNavBtn("Ultimate Pro", "ultimate_logo.png"), # Yeni Pro Menüsü
+            "Ultimate": AnimatedNavBtn("Ultimate Pro", "ultimate_logo.png"),
             "Gaming": AnimatedNavBtn("Oyun & Latency", "oyn_lc_button.svg"),
             "Health": AnimatedNavBtn("Sağlık & Onarım", "gvn_no_button_.svg"),
             "Stability": AnimatedNavBtn("Emülatör Stabilite", "emu_stb_button_off.svg", "emu_stb_button_on.png"),
@@ -906,8 +1136,9 @@ class MainWindow(QMainWindow):
         }
 
         for key in ["Genel", "Ultimate", "Gaming", "Health", "Stability", "Privacy"]:
-            self.nav_btns[key].clicked.connect(lambda checked=False, k=key: self.switch_page(k))
-            self.sidebar_layout.addWidget(self.nav_btns[key])
+            if self.nav_btns[key]:
+                self.nav_btns[key].clicked.connect(lambda checked=False, k=key: self.switch_page(k))
+                self.sidebar_layout.addWidget(self.nav_btns[key])
 
         if self.hw['gpu'] == "NVIDIA": self.nav_btns["GPU"] = AnimatedNavBtn("NVIDIA Ayarları", "nvdia_button.svg")
         elif self.hw['gpu'] == "AMD": self.nav_btns["GPU"] = AnimatedNavBtn("AMD GPU Ayarları", "amd_button.svg")
@@ -946,8 +1177,9 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         logging.info("Application closing. Cleaning up...")
-        if self.engine and self.engine.pro_engine:
-            self.engine.pro_engine.stop()
+        if self.engine:
+            if self.engine.pro_engine: self.engine.pro_engine.stop()
+            if self.engine.adv_cpu_engine: self.engine.adv_cpu_engine.stop()
         if self.update_worker and self.update_worker.isRunning():
             self.update_worker.terminate()
             self.update_worker.wait()
@@ -1061,7 +1293,7 @@ class MainWindow(QMainWindow):
             ("Hızlı Başlatmayı Kapat", "Sistem kararlılığı için hibrit kapatmayı devre dışı bırakır."),
             ("FSO & Game Bar Kapat", "Tam ekran iyileştirmelerini ve Game Bar gecikmesini engeller."),
             ("OneDrive Kaldır", "Sistemi yavaşlatan OneDrive'ı tamamen kaldırır.")
-        ]))
+        ], "genel_banner.svg"))
         # 1. Ultimate Pro
         self.content_area.addWidget(self.create_page("Ultimate Pro Tweaks", [
             ("Dynamic Timer Resolution", "Oyun algılandığında 0.5ms ultra düşük gecikme timer'ını aktif eder.", "timer_controller.svg"),
@@ -1069,7 +1301,7 @@ class MainWindow(QMainWindow):
             ("Disk I/O Burst Smoother", "Emülatör disk patlamalarını ve texture load takılmalarını yumuşatır.", "disk_io_smoother.svg"),
             ("Standby Memory Guard", "Bellek parçalanmasını izler ve sadece ihtiyaç duyulduğunda RAM'i optimize eder.", "memory_guard.svg"),
             ("GPU Interrupt Priority Lock", "GPU kesintilerini son çekirdeğe kilitleyerek mouse ve frame gecikmesini düşürür.", "gpu_interrupt_lock.svg")
-        ]))
+        ], "ultimate_banner.svg"))
         # 2. Gaming & Latency
         self.content_area.addWidget(self.create_page("Oyun & Düşük Gecikme", [
             ("Gecikme İyileştirme (MMCSS)", "Ağ ve işlemci önceliğini multimedya/oyunlara odaklar."),
@@ -1077,11 +1309,11 @@ class MainWindow(QMainWindow):
             ("TCP No Delay", "Ağ paket gecikmesini (Nagle's Algorithm) optimize eder."),
             ("Game Mode Aktif", "Windows'un oyun modunu en agresif seviyeye getirir."),
             ("HPET Kapat", "Sistem zamanlayıcı gecikmesini minimuma indirir (Timer Resolution).")
-        ]))
+        ], "gaming_banner.svg"))
         # 2. Emulator Stability
         self.content_area.addWidget(self.create_page("Emulator Stability Engine", [
             ("Emulator Stability Engine", "VM Tick, Cache Pulse ve GPU Gate sistemlerini birleştirerek emülatör takılmalarını yok eder."),
-        ]))
+        ], "stability_banner.svg"))
         # 3. Health & Repair
         self.content_area.addWidget(self.create_page("Sistem Sağlığı & Onarım", [
             ("Onarım Modu (FREE)", "Windows sistem kaynaklarını oyun için geçici olarak onarır ve optimize eder."),
@@ -1093,37 +1325,56 @@ class MainWindow(QMainWindow):
             ("Donanım-Windows Uyum Analizi (VIP)", "Sorunun donanımsal mı yoksa yazılımsal mı olduğunu belirler."),
             ("Geri Alma Koruması (FREE)", "Her işlemden önce otomatik mini geri yükleme noktası oluşturur."),
             ("Sessiz Tüketici Algısı (VIP)", "Arka planda gizli performans emen süreçleri uyarır.")
-        ]))
+        ], "health_banner.svg"))
         # 4. Privacy
         self.content_area.addWidget(self.create_page("Gizlilik & Debloat", [
             ("Mağaza Otomatik Güncelleme Kapat", "Arka planda uygulama güncellemeyi durdurur."),
             ("Hata Raporlama Kapat", "Windows Error Reporting servislerini devre dışı bırakır."),
             ("Reklam Kimliğini Kapat", "Kişiselleştirilmiş reklam takibini engeller.")
-        ]))
+        ], "privacy_banner.svg"))
         # 4. GPU
         if self.nav_btns["GPU"]:
             gpu_t = "NVIDIA Premium Tweaks" if self.hw['gpu'] == "NVIDIA" else "AMD Radeon Pro Tweaks"
             gpu_list = [("MPO Fix Uygula", "Overlay kaynaklı titreme ve takılmaları çözer.")]
             if self.hw['gpu'] == "NVIDIA":
                 gpu_list += [("Ansel Kapat", "NVIDIA Ansel kamera arayüzünü devre dışı bırakır."), ("Düşük Gecikme Modu", "Input lag'ı minimize eder.")]
+                self.content_area.addWidget(self.create_page(gpu_t, gpu_list, "nvidia_banner.svg"))
             else:
                 gpu_list += [("ULPS Kapat", "Düşük güç modunu kapatarak stabilite artırır."), ("Shader Cache Reset", "Oyun stuttering problemlerini giderir.")]
-            self.content_area.addWidget(self.create_page(gpu_t, gpu_list))
+                self.content_area.addWidget(self.create_page(gpu_t, gpu_list, "amd_banner.svg"))
         # 5. CPU
         if self.nav_btns["CPU"]:
-            cpu_t = "Intel Core Optimize" if self.hw['cpu'] == "INTEL" else "AMD Ryzen Master Tweaks"
-            cpu_list = [
-                ("Power Throttling Kapat", "CPU'nun frekans düşürmesini (Power Limit) engeller."),
-                ("Çekirdek Park Etmeyi Kapat", "Tüm çekirdeklerin %100 uyanık kalmasını sağlar.")
-            ]
-            self.content_area.addWidget(self.create_page(cpu_t, cpu_list))
+            if self.hw['cpu'] == "INTEL":
+                cpu_t = "Intel Core Optimize"
+                cpu_list = [
+                    ("Power Throttling Kapat", "CPU'nun frekans düşürmesini (Power Limit) engeller."),
+                    ("Çekirdek Park Etmeyi Kapat", "Tüm çekirdeklerin %100 uyanık kalmasını sağlar."),
+                    ("Adaptive Core Priority Masking (ACPM)", "Sadece en hızlı çekirdekleri (P-Core) oyuna özel olarak kilitler.", "core_isolation.svg"),
+                    ("Instruction Cache Locking (ICL-FPS)", "Oyun kodlarını CPU önbelleğinde (L1/L2) öncelikli tutar.", "memory_guard.svg"),
+                    ("FPS DNA MODE™", "Oyunu analiz eder ve 3 dk içinde size özel CPU profili oluşturur.", "ult_icon.svg"),
+                    ("Micro-Stutter Killer Loop", "0.5ms'lik işlemci boşluklarını doldurarak pürüzsüz frame time sağlar.", "timer_controller.svg"),
+                    ("Clock Stabilization", "İşlemci saat hızındaki dalgalanmaları (jitter) öldürür.", "core_isolation.svg")
+                ]
+                self.content_area.addWidget(self.create_page(cpu_t, cpu_list, "intel_banner.svg"))
+            else:
+                cpu_t = "AMD Ryzen Master Tweaks"
+                cpu_list = [
+                    ("Power Throttling Kapat", "CPU'nun frekans düşürmesini (CPPC) engeller."),
+                    ("Çekirdek Park Etmeyi Kapat", "Tüm çekirdeklerin %100 uyanık kalmasını sağlar."),
+                    ("Adaptive Core Priority Masking (ACPM)", "Sadece en düşük gecikmeli (CCD/CCX) çekirdekleri oyuna kilitler.", "core_isolation.svg"),
+                    ("Instruction Cache Locking (ICL-FPS)", "Oyun kodlarını L3 cache içinde öncelikli tutar (L3 Pinning).", "memory_guard.svg"),
+                    ("FPS DNA MODE™", "AMD mimarisine özel thread davranış analizi yapar.", "ult_icon.svg"),
+                    ("Micro-Stutter Killer Loop", "CCD geçiş gecikmelerini (Latency) minimize eder.", "timer_controller.svg"),
+                    ("Clock Stabilization", "Precision Boost saat hızı dalgalanmalarını sabitler.", "core_isolation.svg")
+                ]
+                self.content_area.addWidget(self.create_page(cpu_t, cpu_list, "amd_banner.svg"))
 
-    def create_page(self, title_text, settings_list):
+    def create_page(self, title_text, settings_list, banner_file="genel_banner.svg"):
         page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(0)
         
         # BANNER / HEADER
         banner = QLabel(); banner.setFixedHeight(180); banner.setObjectName("PageBanner")
-        banner_pix = QPixmap(get_ui_path("banner.png"))
+        banner_pix = QPixmap(get_ui_path(banner_file))
         if not banner_pix.isNull():
             banner.setPixmap(banner_pix.scaled(820, 180, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
         
@@ -1174,8 +1425,6 @@ class MainWindow(QMainWindow):
             if btn: btn.update_icon()
         
         indices = {"Genel": 0, "Ultimate": 1, "Gaming": 2, "Health": 3, "Stability": 4, "Privacy": 5, "GPU": 6, "CPU": 7}
-        # Correctly find index by name because of dynamic nature
-        # For simplicity, we match the creation order
         order = ["Genel", "Ultimate", "Gaming", "Health", "Stability", "Privacy", "GPU", "CPU"]
         idx = 0
         for name in order:

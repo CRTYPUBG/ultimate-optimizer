@@ -1,0 +1,18 @@
+<svg width="820" height="180" viewBox="0 0 820 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="820" height="180" fill="url(#paint0_linear)"/>
+<path d="M0 180L150 0H820V180H0Z" fill="black" fill-opacity="0.2"/>
+<g opacity="0.4">
+<path d="M600 0L750 180M650 0L800 180M700 0L850 180" stroke="#00C2FF" stroke-width="2"/>
+</g>
+<circle cx="100" cy="90" r="150" fill="url(#paint1_radial)" opacity="0.3"/>
+<defs>
+<linearGradient id="paint0_linear" x1="0" y1="0" x2="820" y2="180" gradientUnits="userSpaceOnUse">
+<stop stop-color="#003594"/>
+<stop offset="1" stop-color="#000B22"/>
+</linearGradient>
+<radialGradient id="paint1_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(100 90) rotate(90) scale(150)">
+<stop stop-color="#00C2FF"/>
+<stop offset="1" stop-color="#00C2FF" stop-opacity="0"/>
+</radialGradient>
+</defs>
+</svg>

@@ -51,9 +51,17 @@ def main():
     signtool = find_signtool()
     if signtool and os.path.exists(PFX_FILE):
         exe_path = f"dist\\{APP_NAME}.exe"
-        sign_cmd = f'"{signtool}" sign /f "{PFX_FILE}" /p {PFX_PASS} /tr http://timestamp.digicert.com /td sha256 /fd sha256 "{exe_path}"'
-        if not run_command(sign_cmd, "Signing Main EXE"):
-            logging.warning("EXE signing failed, but proceeding...")
+        sign_cmd = f'"{signtool}" sign /f "{PFX_FILE}" /p {PFX_PASS} /d "{APP_NAME}" /tr http://timestamp.digicert.com /td sha256 /fd sha256 "{exe_path}"'
+        if run_command(sign_cmd, "Signing Main EXE"):
+            verify_cmd = f'"{signtool}" verify /pa /v "{exe_path}"'
+            run_command(verify_cmd, "Verifying Main EXE Signature")
+            run_command(verify_cmd, "Verifying Main EXE Signature")
+        else:
+            logging.warning("EXE signing failed!")
+        
+        # Sertifikayı dist klasörüne kopyala (Manuel kurulum için)
+        if os.path.exists("C:\\Users\\LenovoPC\\cert.cer"):
+            shutil.copy("C:\\Users\\LenovoPC\\cert.cer", "dist\\cert.cer")
     else:
         logging.warning("SignTool or PFX not found. Skipping EXE signing.")
 
@@ -72,8 +80,15 @@ def main():
         setups = [f for f in os.listdir(installer_dir) if f.endswith(".exe") and VERSION in f]
         if setups:
             setup_path = os.path.join(installer_dir, setups[0])
-            sign_setup = f'"{signtool}" sign /f "{PFX_FILE}" /p {PFX_PASS} /tr http://timestamp.digicert.com /td sha256 /fd sha256 "{setup_path}"'
-            run_command(sign_setup, "Signing Installer EXE")
+            sign_setup = f'"{signtool}" sign /f "{PFX_FILE}" /p {PFX_PASS} /d "{APP_NAME} Installer" /tr http://timestamp.digicert.com /td sha256 /fd sha256 "{setup_path}"'
+            if run_command(sign_setup, "Signing Installer EXE"):
+                verify_setup = f'"{signtool}" verify /pa /v "{setup_path}"'
+                verify_setup = f'"{signtool}" verify /pa /v "{setup_path}"'
+                run_command(verify_setup, "Verifying Installer Signature")
+            
+            # Sertifikayı installer klasörüne de kopyala
+            if os.path.exists("C:\\Users\\LenovoPC\\cert.cer"):
+                shutil.copy("C:\\Users\\LenovoPC\\cert.cer", "installer\\cert.cer")
 
     print("\n--- BUILD COMPLETED SUCCESSFULLY ---")
     print(f"Location: {os.path.abspath('installer')}")

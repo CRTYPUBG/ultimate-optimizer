@@ -1,7 +1,7 @@
 {
   "name": "ultimate-optimizer",
-  "version": "v1.0.6",
-  "latest_seen": "v1.0.6",
-  "description": "✅ Yapılan Yenilikler (Özet)\r\n\r\n 🎨 Görsel Değişim\r\n- İkonlar: Emülatör ve navigasyon için yeni `on/off` ikonları eklendi.\r\n\r\n ⚙️ Teknik Gelişim\r\n- ESE Motoru: Tüm emülatör ayarları tek tuşla (Unified) birleştirildi.\r\n- Kayıt Sistemi: Ayarlar artık `Settings.json` ile kalıcı hale getirildi.\r\n- CMD Gizleme: Program artık arka planda tamamen sessiz (CMD'siz) açılıyor.\r\n- Hata Giderme: QThread ve karakter kodlama hataları giderildi.",
-  "last_check": "24.12.2025 16:08:08"
+  "version": "v1.1.7",
+  "latest_seen": "v1.1.7",
+  "description": "✅ v1.1.7 Yenilikleri\r\n\r\n 🧬 FPS DNA MODE™\r\n- Oyun davranışlarını analiz eden ve 3 dakikada özel CPU profili çıkaran yapay zeka sistemi eklendi.\r\n\r\n ⚙️ İşlemci Mimari Desteği\r\n- Intel P-Core/E-Core ve AMD CCD/CCX yapıları için özel optimizasyon sayfaları ve bannerlar eklendi.\r\n- Instruction Cache Locking (ICL-FPS) ile L1/L2/L3 önbellek yönetimi geliştirildi.\r\n\r\n 🚀 Performans & Stabilite\r\n- Micro-Stutter Killer Loop ile anlık takılmalar %90 oranında azaltıldı.\r\n- Clock Stabilization ile CPU frekans dalgalanmaları engellendi.\r\n- Arayüz tamamen SVG bannerlar ile modernize edildi.",
+  "last_check": "16.01.2026 08:16:00"
 }
