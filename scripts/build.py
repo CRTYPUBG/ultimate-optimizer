@@ -7,19 +7,20 @@ import json
 from datetime import datetime
 
 # --- CONFIGURATION ---
-VERSION = "1.1.8"
+VERSION = "1.1.9"
 APP_NAME = "UltimateOptimizer"
 UPDATER_NAME = "Updater"
 PFX_FILE = r"C:\Users\LenovoPC\cert.pfx"
 PFX_PASS = "ueo586_crty555"
 SIGNTOOL_BASE = r"C:\Program Files (x86)\Windows Kits\10\bin"
-ISS_FILE = "../setup.iss"
+ISS_FILE = "../installer/setup.iss"
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 def run_command(cmd, description):
     logging.info(f"Running: {description}...")
     try:
+        # Filter out the --key error if it somehow persists, but here we just run
         result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
         return True
     except subprocess.CalledProcessError as e:
@@ -54,13 +55,13 @@ def main():
         if os.path.exists(folder): shutil.rmtree(folder, ignore_errors=True)
     
     # 2. Build Main EXE
-    logging.info("Building Main EXE with Security Pack (AES-256)...")
+    logging.info("Building Main EXE...")
     if not run_command("build_exe.bat", "PyInstaller Main EXE Build"):
         sys.exit(1)
     
     # 3. Build Updater EXE
-    logging.info("Building Updater EXE with Security Pack...")
-    updater_cmd = f'pyinstaller --noconfirm --onefile --clean --console --key "CRTY_SEC_PACK_256" --icon="../assets/icons/app_icon.ico" --name "{UPDATER_NAME}" "../src/core/updater_standalone.py"'
+    logging.info("Building Updater EXE...")
+    updater_cmd = f'pyinstaller --noconfirm --onefile --clean --console --icon="../assets/icons/app_icon.ico" --name "{UPDATER_NAME}" "../src/core/updater_standalone.py"'
     # Wait, I need to create updater_standalone.py or point to updater.py
     if not run_command(updater_cmd, "PyInstaller Updater EXE Build"):
         sys.exit(1)

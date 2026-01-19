@@ -3,9 +3,8 @@
 cd /d "%~dp0"
 echo Ultimate Optimizer EXE Olusturuluyor...
 
-:: PyInstaller calistiriliyor (Security Pack: AES-256 Equivalent Encryption)
+:: PyInstaller calistiriliyor
 pyinstaller --noconsole --onefile --clean ^
-    --key "CRTY_SEC_PACK_256" ^
     --icon="../assets/icons/app_icon.ico" ^
     --add-data "../assets/icons;assets/icons" ^
     --add-data "../src/ui/style.qss;src/ui" ^
