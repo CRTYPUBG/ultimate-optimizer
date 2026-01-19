@@ -25,9 +25,13 @@ wheels/
 installer/
 log-data.log
 Settings.json
-*.msix
+logs/
+*.log
+*.exe
+!dist/*.exe
 *.pfx
 *.cer
+*.zip
 
 # IDE
 .vscode/
